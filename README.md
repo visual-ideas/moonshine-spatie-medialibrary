@@ -1,0 +1,1 @@
+# moonshine-spatie-laravel-medialibrary
