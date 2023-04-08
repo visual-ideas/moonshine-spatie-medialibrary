@@ -1,0 +1,60 @@
+{
+  "name": "visual-ideas/moonshine-spatie-medialibrary",
+  "description": "Spatie\\MediaLibrary field for MoonShine Laravel admin panel",
+  "keywords": [
+    "PHP",
+    "Gallery",
+    "Laravel",
+    "Eloquent",
+    "Images",
+    "Upload",
+    "Media",
+    "VisualIdeas",
+    "VI",
+    "Spatie",
+    "MoonShine",
+    "Spatie MediaLibrary",
+    "Spatie Laravel MediaLibrary"
+  ],
+  "homepage": "https://github.com/visual-ideas/moonshine-spatie-medialibrary",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Alex",
+      "email": "alex.visualideas@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^8.0|^8.1|^8.2",
+    "lee-to/moonshine": "@dev",
+    "laravel/framework": "^9.0|^10.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "VI\\MoonShine\\Fields\\Spatie\\MediaLibrary\\": "src"
+    },
+    "files": [
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+      ],
+      "aliases": {
+      }
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+
+  "repositories": [
+    {
+      "type": "path",
+      "url": "/usr/local/var/www/visual-ideas/moonshine",
+      "options": {
+        "symlink": true
+      }
+    }
+  ]
+}
