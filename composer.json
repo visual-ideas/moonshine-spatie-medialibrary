@@ -26,13 +26,11 @@
     }
   ],
   "require": {
-    "php": "^8.0|^8.1|^8.2",
-    "lee-to/moonshine": "@dev",
-    "laravel/framework": "^9.0|^10.0"
+    "php": "^8.0|^8.1|^8.2"
   },
   "autoload": {
     "psr-4": {
-      "VI\\MoonShine\\Fields\\Spatie\\MediaLibrary\\": "src"
+      "VI\\MoonShineSpatieMediaLibrary\\": "src"
     },
     "files": [
     ]
@@ -46,15 +44,5 @@
     }
   },
   "minimum-stability": "dev",
-  "prefer-stable": true,
-
-  "repositories": [
-    {
-      "type": "path",
-      "url": "/usr/local/var/www/visual-ideas/moonshine",
-      "options": {
-        "symlink": true
-      }
-    }
-  ]
+  "prefer-stable": true
 }
