@@ -4,7 +4,7 @@ namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Leeto\MoonShine\Fields\Image;
+use MoonShine\Fields\Image;
 
 class MediaLibrary extends Image
 {
