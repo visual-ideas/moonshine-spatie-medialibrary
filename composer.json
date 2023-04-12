@@ -16,8 +16,13 @@
     "Spatie MediaLibrary",
     "Spatie Laravel MediaLibrary"
   ],
-  "homepage": "https://github.com/visual-ideas/moonshine-spatie-medialibrary",
+  "type": "library",
+  "homepage": "https://moonshine.cutcode.dev/section/fields-spatie-medialibrary",
   "license": "MIT",
+  "support": {
+    "issues": "https://github.com/visual-ideas/moonshine-spatie-medialibrary/issues",
+    "source": "https://github.com/visual-ideas/moonshine-spatie-medialibrary"
+  },
   "authors": [
     {
       "name": "Alex",
@@ -34,6 +39,9 @@
     },
     "files": [
     ]
+  },
+  "conflict": {
+    "moonshine/moonshine": "<1.52"
   },
   "extra": {
     "laravel": {
