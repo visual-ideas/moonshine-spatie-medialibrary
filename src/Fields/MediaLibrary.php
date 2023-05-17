@@ -16,6 +16,11 @@ class MediaLibrary extends Image
         return $item;
     }
 
+    public function hasManyOrOneSave($hiddenKey, array $values = []): array
+    {
+        return $values;
+    }
+
     public function afterSave(Model $item): void
     {
         if ($this->isCanSave()) {
