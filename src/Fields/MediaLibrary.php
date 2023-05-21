@@ -3,52 +3,65 @@
 namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use MoonShine\Fields\Image;
 
 class MediaLibrary extends Image
 {
+    protected bool $isDeleteFiles = false;
 
-    public static string $view = 'moonshine::fields.image';
+    protected array $wasRecentlyCreated = [];
 
-    public function save(Model $item): Model
+    public function hasManyOrOneSave($hiddenKey, array $values = [], Model $item = null): array
     {
-        return $item;
-    }
+        $this->storeMedia(
+            $item,
+            $values[$this->field()] ?? null,
+            request()->collect($hiddenKey)->reject(fn($v) => is_numeric($v))
+        );
 
-    public function hasManyOrOneSave($hiddenKey, array $values = []): array
-    {
         return $values;
     }
 
     public function afterSave(Model $item): void
     {
-        if ($this->isCanSave()) {
-            $requestValue = $this->requestValue();
+        $this->storeMedia(
+            $item,
+            $this->requestValue() !== false ? $this->requestValue() : null,
+            request()->collect("hidden_{$this->field()}")
+        );
+    }
 
-            if ($this->isMultiple()) {
-                $oldValues = collect(request("hidden_{$this->field()}", []));
+    public function storeMedia($item, array|UploadedFile|null $requestValue, Collection $oldValues): void
+    {
+        if ($requestValue) {
+            if (!$this->isMultiple()) {
+                $requestValue = [$requestValue];
+            }
 
-                if ($oldValues->count() < $item->getMedia($this->field())->count()) {
-                    foreach ($item->getMedia($this->field()) as $media) {
-                        if (!$oldValues->contains($media->getUrl())) {
-                            $media->delete();
-                        }
-                    }
-                }
-                if ($requestValue) {
-                    foreach ($requestValue as $file) {
-                        $item->addMedia($file)
-                            ->preservingOriginal()
-                            ->toMediaCollection($this->field());
-                    }
-                }
-            } else {
-                if ($requestValue) {
-                    $item->addMedia($requestValue)
-                        ->preservingOriginal()
-                        ->toMediaCollection($this->field());
-                }
+            foreach ($requestValue as $file) {
+                $this->addMedia($item, $file);
+            }
+        }
+
+        $this->removeOldMedia($item, $oldValues);
+    }
+
+    private function addMedia(Model $item, UploadedFile $file)
+    {
+        $media = $item->addMedia($file)
+            ->preservingOriginal()
+            ->toMediaCollection($this->field());
+
+        $this->wasRecentlyCreated[$media->getUrl()] = $media->getUrl();
+    }
+
+    private function removeOldMedia(Model $item, Collection $oldValues): void
+    {
+        foreach ($item->getMedia($this->field()) as $media) {
+            if (!isset($this->wasRecentlyCreated[$media->getUrl()]) && !$oldValues->contains($media->getUrl())) {
+                $media->delete();
             }
         }
     }
@@ -88,5 +101,15 @@ class MediaLibrary extends Image
     public function path(string $value): string
     {
         return '';
+    }
+
+    public function getDir(): string
+    {
+        return '';
+    }
+
+    public function save(Model $item): Model
+    {
+        return $item;
     }
 }

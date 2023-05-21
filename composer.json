@@ -41,7 +41,7 @@
     ]
   },
   "conflict": {
-    "moonshine/moonshine": "<1.52"
+    "moonshine/moonshine": "<1.57"
   },
   "extra": {
     "laravel": {
