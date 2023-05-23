@@ -13,28 +13,21 @@ class MediaLibrary extends Image
 
     protected array $wasRecentlyCreated = [];
 
-    public function hasManyOrOneSave($hiddenKey, array $values = [], Model $item = null): array
+    public function hasManyOrOneSave(array|UploadedFile|null $valueOrValues = null): array|string|null
     {
-        $this->storeMedia(
-            $item,
-            $values[$this->field()] ?? null,
-            request()->collect($hiddenKey)->reject(fn($v) => is_numeric($v))
-        );
-
-        return $values;
+        return $valueOrValues;
     }
 
     public function afterSave(Model $item): void
     {
-        $this->storeMedia(
-            $item,
-            $this->requestValue() !== false ? $this->requestValue() : null,
-            request()->collect("hidden_{$this->field()}")
-        );
+        $this->storeMedia($item);
     }
 
-    public function storeMedia($item, array|UploadedFile|null $requestValue, Collection $oldValues): void
+    public function storeMedia(Model $item): void
     {
+        $oldValues = request()->collect($this->hiddenOldValuesKey());
+        $requestValue = $this->requestValue();
+
         if ($requestValue) {
             if (!$this->isMultiple()) {
                 $requestValue = [$requestValue];
