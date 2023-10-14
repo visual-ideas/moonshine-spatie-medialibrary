@@ -45,34 +45,7 @@ class MediaLibrary extends Image
         return $this;
     }
 
-    protected function resolveOnApply(): ?Closure
-    {
-        return static fn($item) => $item;
-    }
 
-    public function afterApply(mixed $data): mixed
-    {
-        $requestValue = $this->requestValue();
-
-        if ($requestValue !== false) {
-            if (!$this->isMultiple()) {
-                $requestValue = [$requestValue];
-            }
-
-            foreach ($requestValue as $file) {
-                $this->addMedia($data, $file);
-            }
-        }
-
-        return null;
-    }
-
-    private function addMedia(HasMedia $item, UploadedFile $file): void
-    {
-        $item->addMedia($file)
-            ->preservingOriginal()
-            ->toMediaCollection($this->column());
-    }
 
     protected function resolvePreview(): View|string
     {
@@ -102,5 +75,34 @@ class MediaLibrary extends Image
         return $this->isMultiple()
             ? $this->value->map(fn($media): string => $media->getFullUrl())->toArray()
             : [$this->value?->getFullUrl()];
+    }
+
+    protected function resolveOnApply(): ?Closure
+    {
+        return static fn($item) => $item;
+    }
+
+    public function afterApply(mixed $data): mixed
+    {
+        $requestValue = $this->requestValue();
+
+        if ($requestValue !== false) {
+            if (!$this->isMultiple()) {
+                $requestValue = [$requestValue];
+            }
+
+            foreach ($requestValue as $file) {
+                $this->addMedia($data, $file);
+            }
+        }
+
+        return null;
+    }
+
+    private function addMedia(HasMedia $item, UploadedFile $file): void
+    {
+        $item->addMedia($file)
+            ->preservingOriginal()
+            ->toMediaCollection($this->column());
     }
 }
