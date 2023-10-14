@@ -2,107 +2,105 @@
 
 namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
-use Illuminate\Database\Eloquent\Model;
+use Closure;
+use InvalidArgumentException;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use MoonShine\Fields\Image;
+use Spatie\MediaLibrary\HasMedia;
 
 class MediaLibrary extends Image
 {
-    protected bool $isDeleteFiles = false;
 
-    protected array $wasRecentlyCreated = [];
-
-    public function hasManyOrOneSave(array|UploadedFile|null $valueOrValues = null): array|string|null
+    public function resolveFill(array $raw = [], mixed $casted = null, int $index = 0): static
     {
-        return $valueOrValues;
+        if ($this->value) {
+            return $this;
+        }
+
+        if (!$casted instanceof HasMedia) {
+            throw new InvalidArgumentException('Model must be an instance of \Spatie\MediaLibrary\HasMedia');
+        }
+
+        $value = $casted->getMedia($this->column());
+
+        if (!$this->isMultiple()) {
+            $value = $value->first();
+        }
+
+        $this->setRawValue($value);
+
+        if (is_closure($this->formattedValueCallback())) {
+            $this->setFormattedValue(
+                value(
+                    $this->formattedValueCallback(),
+                    empty($casted) ? $this->toRawValue() : $casted,
+                    $index
+                )
+            );
+        }
+
+        $this->setValue($value);
+
+        return $this;
     }
 
-    public function afterSave(Model $item): void
+    protected function resolveOnApply(): ?Closure
     {
-        $this->storeMedia($item);
+        return static fn($item) => $item;
     }
 
-    public function storeMedia(Model $item): void
+    public function afterApply(mixed $data): mixed
     {
-        $oldValues = request()->collect($this->hiddenOldValuesKey());
         $requestValue = $this->requestValue();
 
-        if ($requestValue) {
+        if ($requestValue !== false) {
             if (!$this->isMultiple()) {
                 $requestValue = [$requestValue];
             }
 
             foreach ($requestValue as $file) {
-                $this->addMedia($item, $file);
+                $this->addMedia($data, $file);
             }
         }
 
-        $this->removeOldMedia($item, $oldValues);
+        return null;
     }
 
-    private function addMedia(Model $item, UploadedFile $file)
+    private function addMedia(HasMedia $item, UploadedFile $file): void
     {
-        $media = $item->addMedia($file)
+        $item->addMedia($file)
             ->preservingOriginal()
-            ->toMediaCollection($this->field());
-
-        $this->wasRecentlyCreated[$media->getUrl()] = $media->getUrl();
+            ->toMediaCollection($this->column());
     }
 
-    private function removeOldMedia(Model $item, Collection $oldValues): void
+    protected function resolvePreview(): View|string
     {
-        foreach ($item->getMedia($this->field()) as $media) {
-            if (!isset($this->wasRecentlyCreated[$media->getUrl()]) && !$oldValues->contains($media->getUrl())) {
-                $media->delete();
-            }
-        }
-    }
 
-    public function indexViewValue(Model $item, bool $container = true): string
-    {
-        if ($this->isMultiple()) {
-            return view('moonshine::ui.image', [
-                'values' => $item->getMedia($this->field())
-                    ->map(fn($value) => $value->getUrl())
-                    ->toArray(),
-            ])->render();
+        if ($this->isRawMode()) {
+            return $this->isMultiple() ?
+                implode(';', $this->value->map(fn($media): string => $media->getFullUrl())->toArray())
+                : $this->value?->getFullUrl();
         }
 
-        $url = $item->getFirstMediaUrl($this->field());
+        return view(
+            'moonshine::ui.image',
+            $this->isMultiple() ? [
+                'values' => $this->getFullPathValues(),
+            ] : ['value' => current($this->getFullPathValues())]
+        );
+    }
 
-        if (empty($url)) {
-            return '';
+    public function getFullPathValues(): array
+    {
+        $values = $this->value;
+
+        if (!$values) {
+            return [];
         }
 
-        return view('moonshine::ui.image', [
-            'value' => $url,
-        ])->render();
-    }
-
-    public function formViewValue(Model $item): Collection|string
-    {
-        if ($this->isMultiple()) {
-            return $item->getMedia($this->field())
-                ->map(fn($value) => $value->getUrl());
-        }
-
-        return $item->getFirstMediaUrl($this->field());
-    }
-
-
-    public function path(string $value): string
-    {
-        return '';
-    }
-
-    public function getDir(): string
-    {
-        return '';
-    }
-
-    public function save(Model $item): Model
-    {
-        return $item;
+        return $this->isMultiple()
+            ? $this->value->map(fn($media): string => $media->getFullUrl())->toArray()
+            : [$this->value?->getFullUrl()];
     }
 }

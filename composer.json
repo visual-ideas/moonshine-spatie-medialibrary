@@ -31,7 +31,9 @@
     }
   ],
   "require": {
-    "php": "^8.0|^8.1|^8.2"
+    "php": "^8.1",
+    "laravel/framework": "^10.20",
+    "moonshine/moonshine": "2.0.0-alpha.2"
   },
   "autoload": {
     "psr-4": {
@@ -41,7 +43,7 @@
     ]
   },
   "conflict": {
-    "moonshine/moonshine": "<1.57"
+    "moonshine/moonshine": "<2.0"
   },
   "extra": {
     "laravel": {
