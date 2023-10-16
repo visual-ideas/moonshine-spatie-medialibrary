@@ -12,40 +12,16 @@ use Spatie\MediaLibrary\HasMedia;
 class MediaLibrary extends Image
 {
 
-    public function resolveFill(array $raw = [], mixed $casted = null, int $index = 0): static
+    protected function prepareFill(array $raw = [], mixed $casted = null): mixed
     {
-        if ($this->value) {
-            return $this;
-        }
-
-        if (!$casted instanceof HasMedia) {
-            throw new InvalidArgumentException('Model must be an instance of \Spatie\MediaLibrary\HasMedia');
-        }
-
         $value = $casted->getMedia($this->column());
 
         if (!$this->isMultiple()) {
             $value = $value->first();
         }
 
-        $this->setRawValue($value);
-
-        if (is_closure($this->formattedValueCallback())) {
-            $this->setFormattedValue(
-                value(
-                    $this->formattedValueCallback(),
-                    empty($casted) ? $this->toRawValue() : $casted,
-                    $index
-                )
-            );
-        }
-
-        $this->setValue($value);
-
-        return $this;
+        return $value;
     }
-
-
 
     protected function resolvePreview(): View|string
     {
@@ -82,7 +58,7 @@ class MediaLibrary extends Image
         return static fn($item) => $item;
     }
 
-    public function afterApply(mixed $data): mixed
+    public function resolveAfterApply(mixed $data): mixed
     {
         $requestValue = $this->requestValue();
 
