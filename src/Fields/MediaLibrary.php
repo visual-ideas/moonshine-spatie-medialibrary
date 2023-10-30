@@ -3,11 +3,13 @@
 namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
 use Closure;
-use InvalidArgumentException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use MoonShine\Fields\Image;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediaLibrary extends Image
 {
@@ -25,7 +27,6 @@ class MediaLibrary extends Image
 
     protected function resolvePreview(): View|string
     {
-
         if ($this->isRawMode()) {
             return $this->isMultiple() ?
                 implode(';', $this->value->map(fn($media): string => $media->getFullUrl())->toArray())
@@ -60,24 +61,44 @@ class MediaLibrary extends Image
 
     public function resolveAfterApply(mixed $data): mixed
     {
+        $oldValues = request()->collect($this->hiddenOldValuesKey())->map(
+            fn($model) => Media::make(json_decode($model, true))
+        );
+
         $requestValue = $this->requestValue();
 
+        $recentlyCreated = collect();
         if ($requestValue !== false) {
             if (!$this->isMultiple()) {
                 $requestValue = [$requestValue];
             }
 
+
             foreach ($requestValue as $file) {
-                $this->addMedia($data, $file);
+                $recentlyCreated->push($this->addMedia($data, $file));
             }
         }
+
+        $this->removeOldMedia($data, $recentlyCreated, $oldValues);
 
         return null;
     }
 
-    private function addMedia(HasMedia $item, UploadedFile $file): void
+    private function removeOldMedia(HasMedia $item, Collection $recentlyCreated, Collection $oldValues): void
     {
-        $item->addMedia($file)
+        foreach ($item->getMedia($this->column()) as $media) {
+            if (
+                !$recentlyCreated->contains('id',$media->getKey())
+                && !$oldValues->contains('id',$media->getKey())
+            ) {
+                $media->delete();
+            }
+        }
+    }
+
+    private function addMedia(HasMedia $item, UploadedFile $file): Media
+    {
+        return $item->addMedia($file)
             ->preservingOriginal()
             ->toMediaCollection($this->column());
     }

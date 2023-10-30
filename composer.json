@@ -33,6 +33,7 @@
   "require": {
     "php": "^8.1",
     "laravel/framework": "^10.20",
+    "spatie/laravel-medialibrary": "^10.0.0",
     "moonshine/moonshine": "2.0.0-alpha.2"
   },
   "autoload": {
