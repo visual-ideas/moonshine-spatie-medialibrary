@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use MoonShine\Fields\Image;
+use MoonShine\Traits\Fields\FileDeletable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -59,7 +60,7 @@ class MediaLibrary extends Image
         return static fn($item) => $item;
     }
 
-    public function resolveAfterApply(mixed $data): mixed
+    protected function resolveAfterApply(mixed $data): mixed
     {
         $oldValues = request()->collect($this->hiddenOldValuesKey())->map(
             fn($model) => Media::make(json_decode($model, true))
@@ -84,12 +85,21 @@ class MediaLibrary extends Image
         return null;
     }
 
+    protected function resolveAfterDestroy(mixed $data): mixed
+    {
+        $data
+            ->getMedia($this->column())
+            ->each(fn(Media $media) => $media->delete());
+
+        return $data;
+    }
+
     private function removeOldMedia(HasMedia $item, Collection $recentlyCreated, Collection $oldValues): void
     {
         foreach ($item->getMedia($this->column()) as $media) {
             if (
-                !$recentlyCreated->contains('id',$media->getKey())
-                && !$oldValues->contains('id',$media->getKey())
+                !$recentlyCreated->contains('id', $media->getKey())
+                && !$oldValues->contains('id', $media->getKey())
             ) {
                 $media->delete();
             }
