@@ -31,7 +31,7 @@ class MediaLibrary extends Image
         if ($this->isRawMode()) {
             return $this->isMultiple() ?
                 implode(';', $this->value->map(fn($media): string => $media->getFullUrl())->toArray())
-                : $this->value?->getFullUrl();
+                : ($this->value?->getFullUrl() ?? '');
         }
 
         return view(
