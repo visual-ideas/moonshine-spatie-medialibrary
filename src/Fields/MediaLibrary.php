@@ -82,6 +82,8 @@ class MediaLibrary extends Image
 
         $this->removeOldMedia($data, $recentlyCreated, $oldValues);
 
+        $this->orderMedia($recentlyCreated, $oldValues);
+
         return null;
     }
 
@@ -111,5 +113,12 @@ class MediaLibrary extends Image
         return $item->addMedia($file)
             ->preservingOriginal()
             ->toMediaCollection($this->column());
+    }
+
+    private function orderMedia(Collection $recentlyCreated, Collection $oldValues): void
+    {
+        $ids = $oldValues->merge($recentlyCreated)->pluck('id')->toArray();
+
+        Media::setNewOrder($ids);
     }
 }
