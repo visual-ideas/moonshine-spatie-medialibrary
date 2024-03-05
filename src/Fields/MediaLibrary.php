@@ -26,22 +26,6 @@ class MediaLibrary extends Image
         return $value;
     }
 
-    protected function resolvePreview(): View|string
-    {
-        if ($this->isRawMode()) {
-            return $this->isMultiple() ?
-                implode(';', $this->value->map(fn($media): string => $media->getFullUrl())->toArray())
-                : ($this->value?->getFullUrl() ?? '');
-        }
-
-        return view(
-            'moonshine::ui.image',
-            $this->isMultiple() ? [
-                'values' => $this->getFullPathValues(),
-            ] : ['value' => current($this->getFullPathValues())]
-        );
-    }
-
     public function getFullPathValues(): array
     {
         $values = $this->value;
