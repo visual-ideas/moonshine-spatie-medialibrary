@@ -119,10 +119,10 @@ class MediaLibrary extends Image
             ]);
     }
 
-    public function removeExcludedFiles(): void
+    public function removeExcludedFiles(null|array|string $newValue = null): void
     {
         $values = collect([
-            $this->toValue(withDefault: false)
+            $this->toValue(withDefault: false),
         ]);
 
         $values->diff([$this->getValue()])->each(fn (string $file) => $this->deleteFile($file));
