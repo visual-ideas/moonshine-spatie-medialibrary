@@ -52,6 +52,8 @@ class MediaLibrary extends Image
             fn($model) => Media::make(json_decode($model, true))
         );
 
+        $this->orderMedia($oldValues);
+        
         $requestValue = $this->getRequestValue();
 
         $recentlyCreated = collect();
@@ -68,7 +70,7 @@ class MediaLibrary extends Image
 
         $this->removeOldMedia($data, $recentlyCreated, $oldValues);
 
-        $this->orderMedia($recentlyCreated);
+       $this->getData()->getOriginal()->refresh();
 
         return null;
     }
