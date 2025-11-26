@@ -49,8 +49,10 @@ class MediaLibrary extends Image
     protected function resolveAfterApply(mixed $data): mixed
     {
         $oldValues = request()->collect($this->getHiddenRemainingValuesKey())->map(
-            fn($model) => Media::make(json_decode($model, true))
+            fn ($model) => Media::make(json_decode($model, true))
         );
+
+        $this->orderMedia($oldValues);
 
         $requestValue = $this->getRequestValue();
 
@@ -60,7 +62,6 @@ class MediaLibrary extends Image
                 $requestValue = [$requestValue];
             }
 
-
             foreach ($requestValue as $file) {
                 $recentlyCreated->push($this->addMedia($data, $file));
             }
@@ -68,9 +69,7 @@ class MediaLibrary extends Image
 
         $this->removeOldMedia($data, $recentlyCreated, $oldValues);
 
-        $this->orderMedia($recentlyCreated);
-
-        return null;
+        $this->getData()->getOriginal()->refresh();
     }
 
     protected function resolveAfterDestroy(mixed $data): mixed
