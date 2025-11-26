@@ -130,14 +130,14 @@ class MediaLibrary extends Image
     public function removeExcludedFilesPatched(null|array|string $newValue = null): void
     {
         $values = collect(
-            $this->toValue(withDefault: false),
+            [$this->toValue(withDefault: false)],
         );
 
         $values->diff([$this->getValue()])->each(
             function (?string $file) use ($newValue): void {
                 $old = array_filter(\is_array($newValue) ? $newValue : [$newValue]);
 
-                if ($file !== null && ! \in_array($file, $old, true)) {
+                if ($file !== null && !\in_array($file, $old, true)) {
                     $this->deleteFile($file);
                 }
             },
