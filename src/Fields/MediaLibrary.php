@@ -49,8 +49,10 @@ class MediaLibrary extends Image
     protected function resolveAfterApply(mixed $data): mixed
     {
         $oldValues = request()->collect($this->getHiddenRemainingValuesKey())->map(
-            fn($model) => Media::make(json_decode($model, true))
+            fn ($model) => Media::make(json_decode($model, true))
         );
+
+        $this->orderMedia($oldValues);
 
         $requestValue = $this->getRequestValue();
 
@@ -60,7 +62,6 @@ class MediaLibrary extends Image
                 $requestValue = [$requestValue];
             }
 
-
             foreach ($requestValue as $file) {
                 $recentlyCreated->push($this->addMedia($data, $file));
             }
@@ -68,9 +69,7 @@ class MediaLibrary extends Image
 
         $this->removeOldMedia($data, $recentlyCreated, $oldValues);
 
-        $this->orderMedia($recentlyCreated);
-
-        return null;
+        $this->getData()->getOriginal()->refresh();
     }
 
     protected function resolveAfterDestroy(mixed $data): mixed
@@ -131,14 +130,14 @@ class MediaLibrary extends Image
     public function removeExcludedFilesPatched(null|array|string $newValue = null): void
     {
         $values = collect(
-            $this->toValue(withDefault: false),
+            [$this->toValue(withDefault: false)],
         );
 
         $values->diff([$this->getValue()])->each(
             function (?string $file) use ($newValue): void {
                 $old = array_filter(\is_array($newValue) ? $newValue : [$newValue]);
 
-                if ($file !== null && ! \in_array($file, $old, true)) {
+                if ($file !== null && !\in_array($file, $old, true)) {
                     $this->deleteFile($file);
                 }
             },
