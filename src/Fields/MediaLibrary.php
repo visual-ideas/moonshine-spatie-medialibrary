@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\MoonShine\Fields;
+namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
 use Closure;
 use Illuminate\Http\UploadedFile;
