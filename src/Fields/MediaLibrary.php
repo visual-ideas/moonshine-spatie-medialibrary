@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
 use Closure;
@@ -152,23 +150,15 @@ class MediaLibrary extends Image
      */
     protected function getFiles(): Collection
     {
-        $mediaItems = collect($this->toValue());
-
         return collect($this->getFullPathValues())
-            ->mapWithKeys(function (string $path, int $index) use ($mediaItems): array {
-                $item = $mediaItems->get($index);
-
-                $rawValue = $item instanceof Media ? $item->file_name : $path;
-
-                return [
-                    $index => new FileItem(
-                        fullPath: $path,
-                        rawValue: (string) $rawValue,
-                        name: (string) \call_user_func($this->resolveNames(), $path, $index, $this),
-                        attributes: \call_user_func($this->resolveItemAttributes(), $path, $index, $this),
-                    ),
-                ];
-            });
+            ->mapWithKeys(fn (string $path, int $index): array => [
+                $index => new FileItem(
+                    fullPath: $path,
+                    rawValue: data_get($this->toValue(), $index, $this->toValue()),
+                    name: (string) \call_user_func($this->resolveNames(), $path, $index, $this),
+                    attributes: \call_user_func($this->resolveItemAttributes(), $path, $index, $this),
+                ),
+            ]);
     }
 
     /**
