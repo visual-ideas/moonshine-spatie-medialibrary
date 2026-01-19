@@ -5,6 +5,7 @@ namespace VI\MoonShineSpatieMediaLibrary\Fields;
 use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use MoonShine\Contracts\UI\ApplyContract;
 use MoonShine\Support\DTOs\FileItem;
 use MoonShine\UI\Fields\Image;
 use Spatie\MediaLibrary\HasMedia;
@@ -14,11 +15,6 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediaLibrary extends Image
 {
-    /**
-     * @param  array      $raw
-     * @param  mixed|null $casted
-     * @return mixed
-     */
     protected function prepareFill(array $raw = [], mixed $casted = null): mixed
     {
         $value = $casted->getOriginal()->getMedia($this->getColumn());
@@ -30,9 +26,6 @@ class MediaLibrary extends Image
         return $value;
     }
 
-    /**
-     * @return array|null[]|string[]
-     */
     public function getFullPathValues(): array
     {
         $values = $this->value;
@@ -46,22 +39,16 @@ class MediaLibrary extends Image
             : [$this->value?->getFullUrl()];
     }
 
-    /**
-     * @return Closure|null
-     */
+    public function getApplyClass(string $type = 'fields', ?string $for = null): ?ApplyContract
+    {
+        return null;
+    }
+
     protected function resolveOnApply(): ?Closure
     {
         return static fn ($item) => $item;
     }
 
-    /**
-     * @param mixed $data
-     *
-     * @throws FileDoesNotExist
-     * @throws FileIsTooBig
-     *
-     * @return mixed
-     */
     protected function resolveAfterApply(mixed $data): mixed
     {
         $oldValues = request()->collect($this->getHiddenRemainingValuesKey())->map(
@@ -90,10 +77,6 @@ class MediaLibrary extends Image
         return null;
     }
 
-    /**
-     * @param  mixed $data
-     * @return mixed
-     */
     protected function resolveAfterDestroy(mixed $data): mixed
     {
         $data
@@ -104,11 +87,6 @@ class MediaLibrary extends Image
         return $data;
     }
 
-    /**
-     * @param HasMedia   $item
-     * @param Collection $recentlyCreated
-     * @param Collection $oldValues
-     */
     private function removeOldMedia(HasMedia $item, Collection $recentlyCreated, Collection $oldValues): void
     {
         foreach ($item->getMedia($this->getColumn()) as $media) {
@@ -122,13 +100,8 @@ class MediaLibrary extends Image
     }
 
     /**
-     * @param HasMedia     $item
-     * @param UploadedFile $file
-     *
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
-     *
-     * @return Media
      */
     private function addMedia(HasMedia $item, UploadedFile $file): Media
     {
@@ -137,17 +110,11 @@ class MediaLibrary extends Image
             ->toMediaCollection($this->getColumn());
     }
 
-    /**
-     * @param Collection $recentlyCreated
-     */
     private function orderMedia(Collection $recentlyCreated): void
     {
         Media::setNewOrder($recentlyCreated->pluck('id')->toArray());
     }
 
-    /**
-     * @return Collection
-     */
     protected function getFiles(): Collection
     {
         return collect($this->getFullPathValues())
@@ -161,9 +128,6 @@ class MediaLibrary extends Image
             ]);
     }
 
-    /**
-     * @param array|string|null $newValue
-     */
     public function removeExcludedFiles(null|array|string $newValue = null): void
     {
         $values = collect([
@@ -173,10 +137,6 @@ class MediaLibrary extends Image
         $values->diff([$this->getValue()])->each(fn (string $file) => $this->deleteFile($file));
     }
 
-    /**
-     * @param  int|string|null $index
-     * @return mixed
-     */
     public function getRequestValue(int|string|null $index = null): mixed
     {
         return $this->prepareRequestValue(
@@ -186,13 +146,11 @@ class MediaLibrary extends Image
         );
     }
 
-    /**
-     * @param  Closure $default
-     * @param  mixed   $data
-     * @return mixed
-     */
     public function apply(Closure $default, mixed $data): mixed
     {
-        return $data;
+        $item = parent::apply($default, $data);
+        unset($item->{$this->getColumn()});
+
+        return $item;
     }
 }
