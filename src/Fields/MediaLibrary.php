@@ -3,25 +3,23 @@
 namespace VI\MoonShineSpatieMediaLibrary\Fields;
 
 use Closure;
-use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use MoonShine\Contracts\UI\FieldContract;
+use MoonShine\Contracts\UI\ApplyContract;
 use MoonShine\Support\DTOs\FileItem;
 use MoonShine\UI\Fields\Image;
-use MoonShine\UI\Traits\Fields\FileDeletable;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediaLibrary extends Image
 {
-
     protected function prepareFill(array $raw = [], mixed $casted = null): mixed
     {
-        $value = $casted->getOriginal()->getMedia($this->column);
+        $value = $casted->getOriginal()->getMedia($this->getColumn());
 
-        if (!$this->isMultiple()) {
+        if (! $this->isMultiple()) {
             $value = $value->first();
         }
 
@@ -32,36 +30,40 @@ class MediaLibrary extends Image
     {
         $values = $this->value;
 
-        if (!$values) {
+        if (! $values) {
             return [];
         }
 
         return $this->isMultiple()
-            ? $this->value->map(fn($media): string => $media->getFullUrl())->toArray()
+            ? $this->value->map(fn ($media): string => $media->getFullUrl())->toArray()
             : [$this->value?->getFullUrl()];
+    }
+
+    public function getApplyClass(string $type = 'fields', ?string $for = null): ?ApplyContract
+    {
+        return null;
     }
 
     protected function resolveOnApply(): ?Closure
     {
-        return static fn($item) => $item;
+        return static fn ($item) => $item;
     }
 
     protected function resolveAfterApply(mixed $data): mixed
     {
         $oldValues = request()->collect($this->getHiddenRemainingValuesKey())->map(
-            fn($model) => Media::make(json_decode($model, true))
+            fn ($model) => Media::make(json_decode($model, true))
         );
 
         $this->orderMedia($oldValues);
-        
+
         $requestValue = $this->getRequestValue();
 
         $recentlyCreated = collect();
         if ($requestValue !== false) {
-            if (!$this->isMultiple()) {
+            if (! $this->isMultiple()) {
                 $requestValue = [$requestValue];
             }
-
 
             foreach ($requestValue as $file) {
                 $recentlyCreated->push($this->addMedia($data, $file));
@@ -70,7 +72,7 @@ class MediaLibrary extends Image
 
         $this->removeOldMedia($data, $recentlyCreated, $oldValues);
 
-       $this->getData()->getOriginal()->refresh();
+        $this->getData()->getOriginal()->refresh();
 
         return null;
     }
@@ -79,29 +81,33 @@ class MediaLibrary extends Image
     {
         $data
             ->getOriginal()
-            ->getMedia($this->column)
-            ->each(fn(Media $media) => $media->delete());
+            ->getMedia($this->getColumn())
+            ->each(fn (Media $media) => $media->delete());
 
         return $data;
     }
 
     private function removeOldMedia(HasMedia $item, Collection $recentlyCreated, Collection $oldValues): void
     {
-        foreach ($item->getMedia($this->column) as $media) {
+        foreach ($item->getMedia($this->getColumn()) as $media) {
             if (
-                !$recentlyCreated->contains('id', $media->getKey())
-                && !$oldValues->contains('id', $media->getKey())
+                ! $recentlyCreated->contains('id', $media->getKey())
+                && ! $oldValues->contains('id', $media->getKey())
             ) {
                 $media->delete();
             }
         }
     }
 
+    /**
+     * @throws FileDoesNotExist
+     * @throws FileIsTooBig
+     */
     private function addMedia(HasMedia $item, UploadedFile $file): Media
     {
         return $item->addMedia($file)
             ->preservingOriginal()
-            ->toMediaCollection($this->column);
+            ->toMediaCollection($this->getColumn());
     }
 
     private function orderMedia(Collection $recentlyCreated): void
@@ -143,7 +149,7 @@ class MediaLibrary extends Image
     public function apply(Closure $default, mixed $data): mixed
     {
         $item = parent::apply($default, $data);
-        unset($item->{$this->column});
+        unset($item->{$this->getColumn()});
 
         return $item;
     }
